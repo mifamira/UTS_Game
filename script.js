@@ -1,43 +1,36 @@
-let move_speed = 3, grativy = 0.5;
-let bird = document.querySelector('.bird');
-let img = document.getElementById('bird-1');
-let sound_point = new Audio('sound/point.mp3');
-let sound_die = new Audio('sound/die.mp3');
-let sound_backsound = new Audio('sound/best adventure.mp3')
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var bird = document.querySelector('.bird')
+var img = document.getElementById('bird-1');
+
+var move_speed = 3, gravity = 0.5;
+var birdY = 300;
+var birdDY = 0;
+var birdHeight = 40;
+var birdWidth = 40;
+
+var sound_point = new Audio('sound/point.mp3');
+var sound_die = new Audio('sound/die.mp3');
+var sound_backsound = new Audio('sound/best adventure.mp3');
 var levelStage = 1;
-// getting bird element properties
-let bird_props = bird.getBoundingClientRect();
 
-// This method returns DOMReact -> top, right, bottom, left, x, y, width and height
-let background = document.querySelector('.background').getBoundingClientRect();
+var score_val = document.querySelector('.score_val');
+var level_val = document.querySelector('.level_val');
+var message = document.querySelector('.message');
+var score_title = document.querySelector('.score_title');
+var score_level = document.querySelector('.score_level');
 
-let score_val = document.querySelector('.score_val');
-let level_val = document.querySelector('.level_val');
-let message = document.querySelector('.message');
-let score_title = document.querySelector('.score_title');
-let score_level = document.querySelector('.score_level');
-
-let game_state = 'Start';
+var game_state = 'Start';
 img.style.display = 'none';
 
-// menampilkan tulisan sebelum mulai game
 message.classList.add('messageStyle');
 
 document.addEventListener('keydown', (e) => {
-    
-	// mulai game saat klik enter
-    if(e.key == 'Enter' && game_state != 'Play'){
-        document.querySelectorAll('.pipe_sprite').forEach((e) => {
-            e.remove();
-        });
-        // menambah backsound 
+    if (e.key == 'Enter' && game_state != 'Play') {
         sound_backsound.play();
 
-        img.style.display = 'block';
-        bird.style.top = '40vh';
         game_state = 'Play';
         message.innerHTML = '';
-        // menampilkan score
         score_title.innerHTML = 'Score : ';
         score_level.innerHTML = 'Level : ';
         score_val.innerHTML = '0';
@@ -47,101 +40,96 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function play(){
-    // fungsi untuk menggerakkan rintangan
-    function move(){
-        if(game_state != 'Play') return;
+function play() {
+    function move() {
+        if (game_state != 'Play') return;
 
-        let pipe_sprite = document.querySelectorAll('.pipe_sprite');
+        // Clear the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw bird
+        ctx.drawImage(img, 50, birdY, birdWidth, birdHeight);
+
+        var pipe_sprite = document.querySelectorAll('.pipe_sprite');
         pipe_sprite.forEach((element) => {
-            let pipe_sprite_props = element.getBoundingClientRect();
-            bird_props = bird.getBoundingClientRect();
+            var pipe_sprite_props = element.getBoundingClientRect();
 
-            // berhasil dilewati
-            if(pipe_sprite_props.right <= 0){
-                element.remove();
-            // gagal dilewati
-            }else{
-                if(bird_props.left < pipe_sprite_props.left + pipe_sprite_props.width && bird_props.left + bird_props.width > pipe_sprite_props.left && bird_props.top < pipe_sprite_props.top + pipe_sprite_props.height && bird_props.top + bird_props.height > pipe_sprite_props.top){
-                    game_state = 'End';
-                    message.innerHTML = 'Game Over'.fontcolor('red') + '<br>Press Enter To Restart';
-                    message.classList.add('messageStyle');
-                    img.style.display = 'none';
-                    // mengatur audio
-                    sound_die.play();
-                    sound_backsound.pause();
-                    return;
+            // Draw pipe
+            ctx.fillRect(pipe_sprite_props.left, pipe_sprite_props.top, pipe_sprite_props.width, pipe_sprite_props.height);
 
-                // mendapat poin
-                }else{
-                    if(pipe_sprite_props.right < bird_props.left && pipe_sprite_props.right + move_speed >= bird_props.left && element.increase_score == '1'){
-                        score_val.innerHTML =+ score_val.innerHTML + 1;
-                        sound_point.play();
-                        // menambah level
-                        if (score_val.innerHTML != 0 && score_val.innerHTML % 5 == 0) {
-                            move_speed += 2;
-                            levelStage += 1;
-                            level_val.innerHTML =+ level_val.innerHTML + 1;
-                        }
-                    }
-                    element.style.left = pipe_sprite_props.left - move_speed + 'px';
-                }
+            // Check collision with bird
+            if (birdY < pipe_sprite_props.bottom &&
+                birdY + birdHeight > pipe_sprite_props.top &&
+                50 + birdWidth > pipe_sprite_props.left &&
+                50 < pipe_sprite_props.right) {
+                game_state = 'End';
+                message.innerHTML = 'Game Over'.fontcolor('red') + '<br>Press Enter To Restart';
+                message.classList.add('messageStyle');
+                img.style.display = 'none';
+
+                sound_die.play();
+                sound_backsound.pause();
+                return;
             }
-       
+            
+            // Move pipe
+            if (pipe_sprite_props.right <= 0) {
+                element.remove();
+            } else {
+                element.style.left = pipe_sprite_props.left - move_speed + 'px';
+            }
         });
+
         requestAnimationFrame(move);
     }
     requestAnimationFrame(move);
 
-    let bird_dy = 0;
-    function apply_gravity(){
-        if(game_state != 'Play') return;
-        bird_dy = bird_dy + grativy;
+    var bird_dy = 0;
+    function apply_gravity() {
+        if (game_state != 'Play') return;
+        bird_dy = bird_dy + gravity;
         document.addEventListener('keydown', (e) => {
-            if(e.key == 'ArrowUp' || e.key == ' '){
-                img.src = 'images/Bird-2.png';
-                bird_dy = -7.6;
+            if (e.key == 'ArrowUp' || e.key == ' ') {
+                birdDY = -7.6; // Change bird's vertical velocity
             }
         });
-        // image ketika klik panah atas
         document.addEventListener('keyup', (e) => {
-            if(e.key == 'ArrowUp' || e.key == ' '){
-                img.src = 'images/Bird.png';
+            if (e.key == 'ArrowUp' || e.key == ' ') {
+                birdDY = 0; // Reset bird's vertical velocity
             }
         });
 
-        if(bird_props.top <= 0 || bird_props.bottom >= background.bottom){
+        birdY += birdDY; // Update bird's position based on velocity
+
+        if (birdY <= 0 || birdY >= canvas.height - birdHeight) { // Check collision with canvas edges
             game_state = 'End';
             message.style.left = '28vw';
             window.location.reload();
             message.classList.remove('messageStyle');
             return;
         }
-        bird.style.top = bird_props.top + bird_dy + 'px';
-        bird_props = bird.getBoundingClientRect();
+        
         requestAnimationFrame(apply_gravity);
     }
     requestAnimationFrame(apply_gravity);
 
-    let pipe_seperation = 0;
-    let pipe_gap = 40;
+    var pipe_seperation = 0;
+    var pipe_gap = 40;
 
-    // fungsi untuk mengatur rintangan
-    function create_pipe(){
-        if(game_state != 'Play') return;
+    function create_pipe() {
+        if (game_state != 'Play') return;
 
-        // jarak antar pipa
-        if(pipe_seperation > 110){
+        if (pipe_seperation > 110) {
             pipe_seperation = 0;
 
-            let pipe_posi = Math.floor(Math.random() * 43) + 8;
-            let pipe_sprite_inv = document.createElement('div');
+            var pipe_posi = Math.floor(Math.random() * 43) + 8;
+            var pipe_sprite_inv = document.createElement('div');
             pipe_sprite_inv.className = 'pipe_sprite';
             pipe_sprite_inv.style.top = pipe_posi - 70 + 'vh';
             pipe_sprite_inv.style.left = '100vw';
 
             document.body.appendChild(pipe_sprite_inv);
-            let pipe_sprite = document.createElement('div');
+            var pipe_sprite = document.createElement('div');
             pipe_sprite.className = 'pipe_sprite';
             pipe_sprite.style.top = pipe_posi + pipe_gap + 'vh';
             pipe_sprite.style.left = '100vw';
