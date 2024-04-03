@@ -16,7 +16,6 @@ let level_val = document.querySelector('.level_val');
 let message = document.querySelector('.message');
 let score_title = document.querySelector('.score_title');
 let score_level = document.querySelector('.score_level');
-let level = document.querySelector('.level');
 
 let game_state = 'Start';
 img.style.display = 'none';
